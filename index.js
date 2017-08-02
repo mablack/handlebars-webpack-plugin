@@ -24,10 +24,9 @@ function getTargetFilepath(filepath, inputTemplate, outputTemplate) {
         .basename(filepath)
         .replace(path.extname(filepath), "");
 
+    // if there are options to set input and output config, like choosing output directory
     if(typeof inputTemplate === 'object' && typeof outputTemplate === 'object') {
-        const outputPath = path.join(outputTemplate.path, filepath.replace(inputTemplate.path, ""), outputTemplate.name.replace("[name]", fileName));
-        console.log(filepath, inputTemplate, outputTemplate);
-        console.log(outputPath);
+        const outputPath = path.join(outputTemplate.path, filepath.replace(path.basename(filepath), "").replace(inputTemplate.path, ""), outputTemplate.name.replace("[name]", fileName));
         return outputPath;
     }
 
@@ -153,17 +152,18 @@ class HandlebarsPlugin {
      * @param  {Function} done
      */
     compileAllEntryFiles(done) {
-        const entryGlob = (typeof this.options.entry === 'object') ? `${this.options.entry.path}` : this.options.entry
+        const entryGlob = (typeof this.options.entry === 'object') ? `${this.options.entry.path}${path.sep}${this.options.entry.glob}` : this.options.entry
         const options = (typeof this.options.entry === 'object') ? {
             cwd: this.options.entry.path,
+            ignore: this.options.entry.ignore,
         } : null
 
-        glob(this.options.entry, options, (err, entryFilesArray) => {
+        glob(entryGlob, options, (err, entryFilesArray) => {
             if (err) {
                 throw err;
             }
             if (entryFilesArray.length === 0) {
-                log(chalk.yellow(`no valid entry files found for ${this.options.entry} -- aborting`));
+                log(chalk.yellow(`no valid entry files found for ${entryGlob} -- aborting`));
                 return;
             }
             entryFilesArray.forEach((filepath) => this.compileEntryFile(filepath));
