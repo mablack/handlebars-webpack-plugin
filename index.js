@@ -15,7 +15,7 @@ const log = require("./utils/log");
  *                                          If ommited, the same filename stripped of its extension will be used
  * @return {String} target filepath
  */
-function getTargetFilepath(filepath, outputTemplate) {
+function getTargetFilepath(filepath, inputTemplate, outputTemplate) {
     if (outputTemplate == null) {
         return filepath.replace(path.extname(filepath), "");
     }
@@ -23,6 +23,14 @@ function getTargetFilepath(filepath, outputTemplate) {
     const fileName = path
         .basename(filepath)
         .replace(path.extname(filepath), "");
+
+    if(typeof inputTemplate === 'object' && typeof outputTemplate === 'object') {
+        const outputPath = path.join(outputTemplate.path, filepath.replace(inputTemplate.path, ""), outputTemplate.name.replace("[name]", fileName));
+        console.log(filepath, inputTemplate, outputTemplate);
+        console.log(outputPath);
+        return outputPath;
+    }
+
     return outputTemplate.replace("[name]", fileName);
 }
 
@@ -145,7 +153,12 @@ class HandlebarsPlugin {
      * @param  {Function} done
      */
     compileAllEntryFiles(done) {
-        glob(this.options.entry, (err, entryFilesArray) => {
+        const entryGlob = (typeof this.options.entry === 'object') ? `${this.options.entry.path}` : this.options.entry
+        const options = (typeof this.options.entry === 'object') ? {
+            cwd: this.options.entry.path,
+        } : null
+
+        glob(this.options.entry, options, (err, entryFilesArray) => {
             if (err) {
                 throw err;
             }
@@ -166,7 +179,7 @@ class HandlebarsPlugin {
      * @param  {String} filepath    - filepath to handelebars template
      */
     compileEntryFile(filepath) {
-        const targetFilepath = getTargetFilepath(filepath, this.options.output);
+        const targetFilepath = getTargetFilepath(filepath, this.options.entry, this.options.output);
         // fetch template content
         let templateContent = this.readFile(filepath, "utf-8");
         templateContent = this.options.onBeforeCompile(Handlebars, templateContent) || templateContent;
