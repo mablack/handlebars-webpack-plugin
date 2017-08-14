@@ -26,7 +26,9 @@ function getTargetFilepath(filepath, inputTemplate, outputTemplate) {
 
     // if there are options to set input and output config, like choosing output directory
     if(typeof inputTemplate === 'object' && typeof outputTemplate === 'object') {
-        const outputPath = path.join(outputTemplate.path, filepath.replace(path.basename(filepath), "").replace(inputTemplate.path, ""), outputTemplate.name.replace("[name]", fileName));
+        const outputPath = path.join(outputTemplate.path,
+            path.resolve(filepath.replace(path.basename(filepath), "")).replace(inputTemplate.path, ""),
+            outputTemplate.name.replace("[name]", fileName));
         return outputPath;
     }
 
